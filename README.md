@@ -107,4 +107,4 @@ No cloud, no telemetry, no accounts.
 
 ## License
 
-[MIT](LICENSE) © 2026 Arthur Alves
+[MIT](LICENSE) © 2026 Arthur Alves <arthur.4lvevs@gmail.com>

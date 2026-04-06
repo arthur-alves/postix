@@ -105,7 +105,7 @@ def main():
         f"Depends: python3 (>= 3.6), python3-gi, gir1.2-gtk-3.0, "
         f"gir1.2-notify-0.7, libnotify-bin\n"
         f"Suggests: gir1.2-appindicator3-0.1\n"
-        f"Maintainer: Arthur Alves <arthur.alves@gmail.com>\n"
+        f"Maintainer: Arthur Alves <arthur.4lvevs@gmail.com>\n"
         f"Description: Post-it notes for the Linux desktop\n"
         f" Floating sticky notes that stay on top of other windows.\n"
         f" Each note can be dragged, resized, and has an independent alarm\n"
