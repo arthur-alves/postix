@@ -71,23 +71,35 @@ postix
 
 ---
 
+> **Linux Mint users:** if the app doesn't open after installing the `.deb`, run `sudo apt install -f` in the terminal to pull missing dependencies.
+
+> **BigLinux / Arch / Manjaro / Fedora users:** `.deb` packages are not supported on your distro. Use **Option 2** below instead.
+
+---
+
 ### Option 2 — Run from source (any Linux)
 
+**Ubuntu / Debian / Linux Mint:**
 ```bash
-# 1. Install dependencies
 sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 \
-                 libnotify-bin python3-markdown
+                 libnotify-bin python3-markdown gir1.2-webkit2-4.1
+```
 
-# Optional (markdown preview):
-sudo apt install gir1.2-webkit2-4.1
-# or on older distros:
-sudo apt install gir1.2-webkit2-4.0
+**Arch / Manjaro / BigLinux:**
+```bash
+sudo pacman -S python-gobject gtk3 libnotify python-markdown webkit2gtk
+```
 
-# 2. Clone the repository
+**Fedora / RHEL:**
+```bash
+sudo dnf install python3-gobject gtk3 libnotify python3-markdown \
+                 webkit2gtk4.1
+```
+
+Then clone and run:
+```bash
 git clone https://github.com/arthur-alves/postix.git
 cd postix
-
-# 3. Run
 python3 postix/main.py
 ```
 

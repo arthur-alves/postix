@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 PACKAGE = f"postix_{VERSION}_all"
 
 ROOT = Path(__file__).parent
@@ -50,10 +50,31 @@ def main():
     # ── launcher script ──
     step("Creating launcher …")
     launcher = DIST / "usr/bin/postix"
-    launcher.write_text(
-        "#!/bin/bash\n"
-        "exec python3 /usr/lib/postix/postix/main.py \"$@\"\n"
-    )
+    launcher.write_text("\n".join([
+        "#!/bin/bash",
+        "# Postix launcher — checks dependencies before starting",
+        "",
+        "MISSING=''",
+        "",
+        "command -v python3 &>/dev/null || MISSING='python3'",
+        "",
+        "python3 -c 'import gi' 2>/dev/null || MISSING=\"$MISSING python3-gi\"",
+        "",
+        "if [ -n \"$MISSING\" ]; then",
+        "    MSG=\"Postix: missing dependencies:\\n$MISSING\\n\\nFix with:\\n  sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 libnotify-bin python3-markdown\"",
+        "    if command -v zenity &>/dev/null; then",
+        "        zenity --error --title='Postix' --text=\"$MSG\" 2>/dev/null",
+        "    elif command -v xmessage &>/dev/null; then",
+        "        xmessage -center \"$MSG\"",
+        "    else",
+        "        echo -e \"$MSG\" >&2",
+        "    fi",
+        "    exit 1",
+        "fi",
+        "",
+        "exec python3 /usr/lib/postix/postix/main.py \"$@\"",
+        "",
+    ]))
     launcher.chmod(launcher.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
     # ── desktop file ──
