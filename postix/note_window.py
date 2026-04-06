@@ -341,7 +341,8 @@ class NoteWindow(Gtk.Window):
         self.text_view.get_buffer().connect("changed", self._on_text_changed)
 
         # Ruled lines drawn via Cairo (CSS background-image doesn't scroll correctly)
-        self.text_view.connect("draw", self._on_draw_ruled_lines)
+        # connect_after ensures lines are drawn ON TOP of the background, under the text
+        self.text_view.connect_after("draw", self._on_draw_ruled_lines)
 
         # Resize from edges via text view
         self.text_view.add_events(
