@@ -125,10 +125,6 @@ def _color_css(note_id: int, c: dict) -> bytes:
         f"  border-bottom: 1px solid {c['border']};"
         f"}}"
         f"{nid} textview, {nid} textview text {{ background-color: {c['bg']}; color: #333300; }}"
-        f"{nid} textview text {{"
-        f"  background-image: repeating-linear-gradient("
-        f"    transparent, transparent 21px, {c['line']} 21px, {c['line']} 22px);"
-        f"}}"
         f"{nid} scrolledwindow {{ background-color: {c['bg']}; }}"
         f"{nid} .resize-bar {{ background-color: {c['hdr']}; border-top: 1px solid {c['border']}; }}"
     ).encode()
@@ -160,6 +156,12 @@ th {{ background: {c['hdr']}; }}
 a {{ color: #0066CC; }}
 ul,ol {{ padding-left: 20px; }}
 </style></head><body>{content_html}</body></html>"""
+
+
+def _hex_to_rgb(hex_color: str):
+    """Convert '#RRGGBB' to (r, g, b) floats 0-1."""
+    h = hex_color.lstrip("#")
+    return tuple(int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
 
 
 _css_applied = False
@@ -337,6 +339,9 @@ class NoteWindow(Gtk.Window):
         self.text_view.set_top_margin(6)
         self.text_view.set_bottom_margin(6)
         self.text_view.get_buffer().connect("changed", self._on_text_changed)
+
+        # Ruled lines drawn via Cairo (CSS background-image doesn't scroll correctly)
+        self.text_view.connect("draw", self._on_draw_ruled_lines)
 
         # Resize from edges via text view
         self.text_view.add_events(
@@ -551,6 +556,39 @@ class NoteWindow(Gtk.Window):
             Gtk.drag_finish(ctx, True, False, time)
 
     # ── resize / drag ─────────────────────────────────────────────────────────
+
+    def _on_draw_ruled_lines(self, widget, cr):
+        """Draw ruled lines aligned to actual text lines using Cairo."""
+        alloc  = widget.get_allocation()
+        buf    = widget.get_buffer()
+
+        # Get line height from Pango metrics of the first iter
+        it     = buf.get_start_iter()
+        rect   = widget.get_iter_location(it)
+        line_h = rect.height
+
+        if line_h <= 0:
+            return False  # metrics not ready yet, skip
+
+        # buffer_to_window_coords gives the scroll offset:
+        # when scrolled down, wy is negative, shifting lines up correctly
+        _, wy = widget.buffer_to_window_coords(
+            Gtk.TextWindowType.TEXT, 0, 0)
+
+        lr, lg, lb = _hex_to_rgb(self._color["line"])
+        cr.set_source_rgba(lr, lg, lb, 0.55)
+        cr.set_line_width(0.8)
+
+        # Draw from the bottom of the first line downward
+        y = wy + line_h
+        while y < alloc.height + line_h:
+            if y >= 0:
+                cr.move_to(0,            int(y) + 0.5)
+                cr.line_to(alloc.width,  int(y) + 0.5)
+                cr.stroke()
+            y += line_h
+
+        return False  # False = let GTK continue and draw text on top
 
     def _on_header_drag(self, _w, event):
         if event.button == 1:
