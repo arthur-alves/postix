@@ -19,6 +19,14 @@ Simple, lightweight, always on top — with alarms, colors, markdown and image s
 
 ---
 
+## 📸 Screenshot
+
+![Postix in action](screenshots/postix-demo.png)
+
+> Multiple notes with different colors, markdown preview and image support — all floating over the desktop.
+
+---
+
 ## ✨ Features
 
 | Feature | Description |
