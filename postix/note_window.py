@@ -380,61 +380,111 @@ class NoteWindow(Gtk.Window):
         return scroll
 
     def _build_header(self) -> Gtk.Widget:
-        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=1)
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         header.get_style_context().add_class("postit-header")
         header.set_size_request(-1, HEADER_H)
 
-        # Drag area
+        # ── drag area (left, expands) ──────────────────────────────────────────
         drag_eb = Gtk.EventBox()
         drag_eb.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
         drag_eb.connect("button-press-event", self._on_header_drag)
         drag_eb.set_hexpand(True)
         lbl = Gtk.Label()
-        lbl.set_markup('<span size="small" foreground="#888800">✎ Post-it</span>')
+        lbl.set_markup('<span size="small" foreground="#888800">✎</span>')
         lbl.set_xalign(0)
-        lbl.set_margin_start(6)
+        lbl.set_margin_start(8)
         drag_eb.add(lbl)
         header.pack_start(drag_eb, True, True, 0)
 
-        def btn(label, tip, cb, extra=None):
+        # ── helper to create icon buttons ──────────────────────────────────────
+        def btn(label, tip, cb):
             b = Gtk.Button(label=label)
             b.get_style_context().add_class("hdr-btn")
-            if extra:
-                b.get_style_context().add_class(extra)
             b.set_relief(Gtk.ReliefStyle.NONE)
             b.set_tooltip_text(tip)
             b.connect("clicked", cb)
             return b
 
-        # Right-side buttons (packed end = right-to-left order)
-        header.pack_end(btn("⏻", "Fechar aplicativo",  self._on_quit),        False, False, 2)
-        header.pack_end(btn("🗑", "Deletar nota",       self._on_delete_note), False, False, 0)
-        header.pack_end(btn("💾", "Salvar nota",        self._on_save),        False, False, 0)
+        def sep():
+            s = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+            s.set_margin_top(7)
+            s.set_margin_bottom(7)
+            return s
 
-        sep = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        sep.set_margin_top(6); sep.set_margin_bottom(6)
-        header.pack_end(sep, False, False, 2)
+        # ── group 1: note actions (left of separator) ─────────────────────────
+        # + new note
+        header.pack_start(btn("+", "Novo post-it",
+                              lambda _: self.app.create_new_note()), False, False, 0)
 
-        self._alarm_btn = btn("🔕", "Configurar alarme", self._on_alarm)
-        header.pack_end(self._alarm_btn, False, False, 0)
-
-        # Preview toggle (only when webkit available)
-        if _HAS_WEBKIT:
-            self._preview_btn = btn("👁", "Visualizar markdown", self._on_toggle_preview)
-            header.pack_end(self._preview_btn, False, False, 0)
-
-        # Color picker
+        # 🎨 color picker
         color_btn = Gtk.MenuButton()
         color_btn.set_label("🎨")
         color_btn.get_style_context().add_class("hdr-btn")
         color_btn.set_relief(Gtk.ReliefStyle.NONE)
         color_btn.set_tooltip_text("Cor do post-it")
         color_btn.set_popover(self._build_color_popover())
-        header.pack_end(color_btn, False, False, 0)
+        header.pack_start(color_btn, False, False, 0)
 
-        header.pack_end(btn("+", "Novo post-it", lambda _: self.app.create_new_note()), False, False, 0)
+        # 👁 markdown preview (optional)
+        if _HAS_WEBKIT:
+            self._preview_btn = btn("👁", "Visualizar markdown",
+                                    self._on_toggle_preview)
+            header.pack_start(self._preview_btn, False, False, 0)
+
+        # 🔔 alarm
+        self._alarm_btn = btn("🔕", "Configurar alarme", self._on_alarm)
+        header.pack_start(self._alarm_btn, False, False, 0)
+
+        header.pack_start(sep(), False, False, 4)
+
+        # ── group 2: window actions (right of separator) ──────────────────────
+        # 💾 save
+        header.pack_start(btn("💾", "Salvar nota", self._on_save), False, False, 0)
+
+        # − minimize to tray
+        header.pack_start(btn("−", "Minimizar para bandeja",
+                              self._on_minimize), False, False, 0)
+
+        # ⋮ more: delete + quit
+        more_btn = Gtk.MenuButton()
+        more_btn.set_label("⋮")
+        more_btn.get_style_context().add_class("hdr-btn")
+        more_btn.set_relief(Gtk.ReliefStyle.NONE)
+        more_btn.set_tooltip_text("Mais opções")
+        more_btn.set_popover(self._build_more_popover())
+        header.pack_start(more_btn, False, False, 2)
 
         return header
+
+    def _build_more_popover(self) -> Gtk.Popover:
+        popover = Gtk.Popover()
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        box.set_border_width(6)
+
+        def menu_btn(label, tip, cb, destructive=False):
+            b = Gtk.Button(label=label)
+            b.set_relief(Gtk.ReliefStyle.NONE)
+            b.set_tooltip_text(tip)
+            b.set_halign(Gtk.Align.START)
+            if destructive:
+                b.get_style_context().add_class("destructive-action")
+            b.connect("clicked", lambda _, p=popover, f=cb: (p.popdown(), f(None)))
+            return b
+
+        box.pack_start(menu_btn("🗑  Deletar esta nota",
+                                "Excluir permanentemente",
+                                self._on_delete_note, destructive=True),
+                       False, False, 0)
+        box.pack_start(Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL),
+                       False, False, 2)
+        box.pack_start(menu_btn("⏻  Fechar aplicativo",
+                                "Encerrar o Postix",
+                                self._on_quit),
+                       False, False, 0)
+
+        box.show_all()
+        popover.add(box)
+        return popover
 
     def _build_color_popover(self) -> Gtk.Popover:
         popover = Gtk.Popover()
@@ -681,6 +731,9 @@ class NoteWindow(Gtk.Window):
             self._flush_geo()
 
     # ── button handlers ───────────────────────────────────────────────────────
+
+    def _on_minimize(self, _btn):
+        self.hide()
 
     def _on_save(self, btn):
         self._force_save()
