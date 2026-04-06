@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Postix
+GenericName=Notas Post-it
+Comment=Notas flutuantes com alarme para o seu desktop Linux
+Exec=postix
+Icon=postix
+Terminal=false
+StartupNotify=false
+Categories=Utility;Office;
+Keywords=nota;postit;lembrete;alarme;sticky;note;

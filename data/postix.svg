@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- shadow -->
+  <rect x="7" y="7" width="38" height="38" rx="3" fill="rgba(0,0,0,0.18)"/>
+  <!-- body -->
+  <rect x="4" y="4" width="38" height="38" rx="3" fill="#FFFF88" stroke="#C8B400" stroke-width="1.5"/>
+  <!-- header strip -->
+  <rect x="4" y="4" width="38" height="11" rx="3" fill="#F2E020" stroke="#C8B400" stroke-width="1.5"/>
+  <rect x="4" y="11" width="38" height="3"  fill="#F2E020"/>
+  <!-- pencil icon in header -->
+  <text x="8" y="13.5" font-size="9" fill="#888800" font-family="sans-serif">✎</text>
+  <!-- ruled lines -->
+  <line x1="10" y1="22" x2="38" y2="22" stroke="#D8C800" stroke-width="1"/>
+  <line x1="10" y1="28" x2="38" y2="28" stroke="#D8C800" stroke-width="1"/>
+  <line x1="10" y1="34" x2="38" y2="34" stroke="#D8C800" stroke-width="1"/>
+  <!-- fold corner -->
+  <polygon points="36,38 42,38 42,44" fill="#E8D000" stroke="#C8B400" stroke-width="1"/>
+</svg>
