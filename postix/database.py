@@ -16,6 +16,10 @@ def get_connection():
 
 def _migrate(conn):
     """Apply incremental migrations on existing databases."""
+    tables = {row[0] for row in conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'")}
+    if "alarms" not in tables:
+        return  # fresh install — CREATE TABLE below will include all columns
     existing = {row[1] for row in conn.execute("PRAGMA table_info(alarms)")}
     if "sound_path" not in existing:
         conn.execute("ALTER TABLE alarms ADD COLUMN sound_path TEXT")
