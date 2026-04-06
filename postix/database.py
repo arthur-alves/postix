@@ -14,8 +14,16 @@ def get_connection():
     return conn
 
 
+def _migrate(conn):
+    """Apply incremental migrations on existing databases."""
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(alarms)")}
+    if "sound_path" not in existing:
+        conn.execute("ALTER TABLE alarms ADD COLUMN sound_path TEXT")
+
+
 def init_db():
     with get_connection() as conn:
+        _migrate(conn)
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS notes (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,6 +48,7 @@ def init_db():
                 interval_minutes INTEGER,
                 enabled          INTEGER DEFAULT 1,
                 last_triggered   TEXT,
+                sound_path       TEXT,
                 created_at       TEXT    DEFAULT (datetime('now'))
             );
         """)
@@ -88,23 +97,23 @@ def get_all_enabled_alarms():
 
 
 def save_alarm(alarm_id, note_id, alarm_type, once_datetime,
-               daily_time, interval_minutes, enabled):
+               daily_time, interval_minutes, enabled, sound_path=None):
     with get_connection() as conn:
         if alarm_id:
             conn.execute(
                 "UPDATE alarms SET alarm_type=?, once_datetime=?, daily_time=?,"
-                " interval_minutes=?, enabled=? WHERE id=?",
+                " interval_minutes=?, enabled=?, sound_path=? WHERE id=?",
                 (alarm_type, once_datetime, daily_time,
-                 interval_minutes, enabled, alarm_id),
+                 interval_minutes, enabled, sound_path, alarm_id),
             )
             return alarm_id
         else:
             cur = conn.execute(
                 "INSERT INTO alarms "
-                "(note_id, alarm_type, once_datetime, daily_time, interval_minutes, enabled)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
+                "(note_id, alarm_type, once_datetime, daily_time, interval_minutes, enabled, sound_path)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (note_id, alarm_type, once_datetime,
-                 daily_time, interval_minutes, enabled),
+                 daily_time, interval_minutes, enabled, sound_path),
             )
             return cur.lastrowid
 

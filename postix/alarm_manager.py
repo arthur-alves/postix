@@ -1,4 +1,4 @@
-"""Alarm checker that runs on a GLib timer."""
+"""Alarm checker + audio playback via GStreamer with subprocess fallback."""
 import os
 import subprocess
 from datetime import datetime, timedelta
@@ -9,41 +9,90 @@ from gi.repository import GLib
 
 from . import database as db
 
+# ── GStreamer ──────────────────────────────────────────────────────────────────
+_HAS_GST = False
+try:
+    gi.require_version("Gst", "1.0")
+    from gi.repository import Gst
+    Gst.init(None)
+    _HAS_GST = True
+except Exception:
+    pass
+
+# ── libnotify ─────────────────────────────────────────────────────────────────
+_HAS_NOTIFY = False
 try:
     gi.require_version("Notify", "0.7")
     from gi.repository import Notify
     Notify.init("Postix")
     _HAS_NOTIFY = True
 except Exception:
-    _HAS_NOTIFY = False
+    pass
 
-# Candidate sound files (freedesktop / ubuntu)
-_SOUNDS = [
+# ── default sound candidates ───────────────────────────────────────────────────
+_DEFAULT_SOUNDS = [
     "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga",
+    "/usr/share/sounds/freedesktop/stereo/message.oga",
     "/usr/share/sounds/ubuntu/stereo/dialog-warning.ogg",
     "/usr/share/sounds/gnome/default/alerts/sonar.ogg",
-    "/usr/share/sounds/freedesktop/stereo/message.oga",
 ]
-_PLAYERS = ["paplay", "aplay", "mplayer", "mpg123"]
+_FALLBACK_PLAYERS = ["paplay", "aplay", "ffplay", "mpg123"]
+
+# Keep references so GStreamer players aren't GC'd before finishing
+_active_players: list = []
 
 
-def _play_sound():
-    for sf in _SOUNDS:
-        if os.path.exists(sf):
-            for player in _PLAYERS:
+def _play_file(path: str):
+    if not path or not os.path.exists(path):
+        return
+    if _HAS_GST:
+        try:
+            player = Gst.ElementFactory.make("playbin", None)
+            player.set_property("uri", f"file://{path}")
+            player.set_state(Gst.State.PLAYING)
+            _active_players.append(player)
+
+            def _cleanup():
                 try:
-                    subprocess.Popen(
-                        [player, sf],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                    return
-                except (FileNotFoundError, OSError):
-                    continue
+                    player.set_state(Gst.State.NULL)
+                    if player in _active_players:
+                        _active_players.remove(player)
+                except Exception:
+                    pass
+                return False
+
+            GLib.timeout_add_seconds(30, _cleanup)
+            return
+        except Exception:
+            pass
+
+    # Subprocess fallback
+    ext = os.path.splitext(path)[1].lower()
+    for cmd in _FALLBACK_PLAYERS:
+        try:
+            subprocess.Popen(
+                [cmd, path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            return
+        except (FileNotFoundError, OSError):
+            continue
 
 
-def _notify(title: str, body: str):
-    _play_sound()
+def play_alarm_sound(sound_path: str | None):
+    """Play custom sound if valid, otherwise fall back to system default."""
+    if sound_path and os.path.exists(sound_path):
+        _play_file(sound_path)
+        return
+    for sf in _DEFAULT_SOUNDS:
+        if os.path.exists(sf):
+            _play_file(sf)
+            return
+
+
+def _notify(title: str, body: str, sound_path: str | None):
+    play_alarm_sound(sound_path)
     if _HAS_NOTIFY:
         try:
             n = Notify.Notification.new(title, body, "dialog-warning")
@@ -56,11 +105,12 @@ def _notify(title: str, body: str):
 def check_alarms(*_args):
     now = datetime.now()
     minute_start = now.replace(second=0, microsecond=0)
-    minute_end = minute_start + timedelta(minutes=1)
+    minute_end   = minute_start + timedelta(minutes=1)
 
     for alarm in db.get_all_enabled_alarms():
-        triggered = False
-        atype = alarm["alarm_type"]
+        triggered  = False
+        atype      = alarm["alarm_type"]
+        sound_path = alarm.get("sound_path")
 
         if atype == "once":
             raw = alarm.get("once_datetime")
@@ -97,7 +147,6 @@ def check_alarms(*_args):
             if mins > 0:
                 last = alarm.get("last_triggered")
                 if not last:
-                    # Start the clock — first fire is after `mins` from creation
                     db.update_alarm_last_triggered(alarm["id"])
                 else:
                     try:
@@ -110,14 +159,14 @@ def check_alarms(*_args):
         if triggered:
             content = (alarm.get("content") or "").strip()
             preview = content[:100] + ("…" if len(content) > 100 else "")
-            _notify("🔔 Postix — Lembrete", preview or "(nota sem conteúdo)")
+            _notify("🔔 Postix — Lembrete",
+                    preview or "(nota sem conteúdo)",
+                    sound_path)
             db.update_alarm_last_triggered(alarm["id"])
 
-    return True  # keep the GLib timer running
+    return True
 
 
 def start(interval_seconds: int = 60):
-    """Start the periodic alarm checker."""
     GLib.timeout_add_seconds(interval_seconds, check_alarms)
-    # Run once after 3 s so interval alarms initialise last_triggered quickly
     GLib.timeout_add_seconds(3, check_alarms)

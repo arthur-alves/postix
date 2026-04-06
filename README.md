@@ -1,110 +1,256 @@
-# Postix 📝
+<div align="center">
 
-Floating sticky notes for the Linux desktop — lightweight, always on top, with alarm support.
+# 📝 Postix
 
-![License](https://img.shields.io/badge/license-MIT-yellow)
-![Platform](https://img.shields.io/badge/platform-Linux-blue)
-![Python](https://img.shields.io/badge/python-3.6%2B-green)
+**Notas post-it flutuantes para o desktop Linux**
 
-## Features
+Simples, leve, sempre visível — com alarmes, cores, markdown e suporte a imagens.
 
-- **Yellow post-it** floating over all windows
-- **Drag** from the title bar to reposition
-- **Resize** from any corner or edge (up to 1280×1280 px)
-- **Multiple notes** — create as many as you need
-- **Auto-save** — content and position saved automatically
-- **Alarm per note** with three modes:
-  - **Once** — specific date and time
-  - **Daily** — every day at a fixed time (e.g. 14:00)
-  - **Interval** — every N hours/minutes (e.g. every 2 h)
-- **Desktop notifications** via libnotify
-- **Local storage** — SQLite at `~/.local/share/postix/notes.db`
-- No internet connection required
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-blue.svg)](https://github.com/arthur-alves/postix/releases)
+[![Python](https://img.shields.io/badge/python-3.6%2B-green.svg)](https://python.org)
+[![Release](https://img.shields.io/github/v/release/arthur-alves/postix)](https://github.com/arthur-alves/postix/releases/latest)
 
-## Screenshot
+---
 
-> A clean yellow post-it floating on your desktop with alarm and save controls.
+### ⬇️ [Download do instalador .deb (Ubuntu / Debian)](https://github.com/arthur-alves/postix/releases/latest)
 
-## Installation
+</div>
 
-### Option 1 — .deb package (Ubuntu / Debian)
+---
 
-Download the latest `.deb` from [Releases](../../releases) and run:
+## ✨ Funcionalidades
 
+| Recurso | Descrição |
+|---|---|
+| 🎨 **6 cores** | Amarelo, Rosa, Azul, Verde, Laranja, Lilás — estilo post-it real |
+| 📌 **Sempre visível** | Flutua sobre todas as janelas |
+| 🖱️ **Arrastar e redimensionar** | Mova pelo cabeçalho, redimensione por qualquer borda ou canto |
+| 📝 **Markdown** | Escreva em markdown e visualize renderizado (negrito, listas, tabelas, código) |
+| 🖼️ **Imagens** | Arraste arquivos de imagem ou cole com `Ctrl+V` direto na nota |
+| 🔔 **Alarmes** | Por nota: uma vez, todo dia ou intervalo (ex: a cada 2h) |
+| 🔊 **Som personalizado** | Escolha seu próprio som de alarme (MP3, WAV, OGG · máx. 15 MB) |
+| 💾 **Auto-save** | Salvo automaticamente enquanto você digita |
+| 🗄️ **100% local** | SQLite em `~/.local/share/postix/notes.db` — sem nuvem, sem conta |
+
+---
+
+## 📦 Instalação
+
+### Opção 1 — Instalar o .deb (recomendado)
+
+**Passo 1:** Baixe o arquivo `.deb` da [página de releases](https://github.com/arthur-alves/postix/releases/latest)
+
+**Passo 2:** Instale
+
+**Se a sua distro suporta clique duplo** (Ubuntu, Linux Mint, etc.):
+> Clique duas vezes no arquivo `.deb` → o gerenciador de pacotes abrirá automaticamente
+
+**Ou pelo terminal:**
 ```bash
+# Instalar
 sudo dpkg -i postix_1.0.0_all.deb
 
-# If missing dependencies:
-sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 libnotify-bin
+# Se faltar alguma dependência, rode em seguida:
+sudo apt install -f
 ```
 
-### Option 2 — Run from source
+**Passo 3:** Abra o Postix
+```bash
+postix
+# ou procure "Postix" no menu de aplicativos
+```
+
+---
+
+### Opção 2 — Executar sem instalar (qualquer Linux)
 
 ```bash
-# Install dependencies
-sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 libnotify-bin
+# 1. Instalar dependências
+sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 \
+                 libnotify-bin python3-markdown
 
-# Clone and run
-git clone https://github.com/arthur4lves/postix.git
+# Opcional (preview markdown):
+sudo apt install gir1.2-webkit2-4.1
+# ou em distros mais antigas:
+sudo apt install gir1.2-webkit2-4.0
+
+# 2. Clonar o repositório
+git clone https://github.com/arthur-alves/postix.git
 cd postix
+
+# 3. Executar
 python3 postix/main.py
 ```
 
-### Option 3 — Install from source
+---
+
+### Opção 3 — Instalar pelo Makefile
 
 ```bash
+git clone https://github.com/arthur-alves/postix.git
+cd postix
+
+# Instalar dependências
+sudo apt install python3-gi gir1.2-gtk-3.0 gir1.2-notify-0.7 \
+                 libnotify-bin python3-markdown
+
+# Instalar no sistema
 sudo make install
-```
 
-## Uninstall
-
-```bash
-sudo dpkg -r postix
-# or, if installed from source:
+# Para desinstalar:
 sudo make uninstall
 ```
 
-## Dependencies
+---
 
-| Package | Purpose |
-|---|---|
-| `python3` | Runtime |
-| `python3-gi` | GTK3 Python bindings |
-| `gir1.2-gtk-3.0` | GTK3 |
-| `gir1.2-notify-0.7` | Desktop notifications |
-| `libnotify-bin` | Notification daemon |
-| `gir1.2-appindicator3-0.1` | System tray (optional, Ubuntu) |
+## 🔨 Compilar o .deb em qualquer Linux
 
-## Build .deb from source
+> Funciona em qualquer distro baseada em Debian/Ubuntu. Não requer linguagem compilada — o `.deb` empacota o Python diretamente.
 
 ```bash
+# 1. Clonar
+git clone https://github.com/arthur-alves/postix.git
+cd postix
+
+# 2. Instalar dependência de build (apenas dpkg-deb, já incluso no Debian/Ubuntu)
+# Se não tiver:
+sudo apt install dpkg
+
+# 3. Gerar o .deb
 python3 build_deb.py
-# Output: dist/postix_1.0.0_all.deb
+
+# O pacote será gerado em:
+#   dist/postix_1.0.0_all.deb
 ```
 
-## Usage
+**Instalar o pacote gerado:**
+```bash
+sudo dpkg -i dist/postix_1.0.0_all.deb
+```
 
-| Button | Action |
+---
+
+## 📋 Dependências
+
+| Pacote | Obrigatório | Descrição |
+|---|---|---|
+| `python3` (≥ 3.6) | ✅ | Runtime |
+| `python3-gi` | ✅ | Bindings GTK3 para Python |
+| `gir1.2-gtk-3.0` | ✅ | Interface gráfica GTK3 |
+| `gir1.2-notify-0.7` | ✅ | Notificações de alarme |
+| `libnotify-bin` | ✅ | Daemon de notificação |
+| `python3-markdown` | ✅ | Renderização markdown |
+| `gir1.2-webkit2-4.1` | ⭐ Recomendado | Preview markdown visual |
+| `gir1.2-appindicator3-0.1` | ⭐ Recomendado | Ícone na bandeja (Ubuntu) |
+| `gstreamer1.0-plugins-good` | ⭐ Recomendado | Áudio MP3 no alarme |
+
+---
+
+## 🖥️ Como usar
+
+### Controles da nota
+
+```
+┌─────────────────────────────────────────────┐
+│ ✎ Post-it  [+][🎨][👁][🔔] [💾][🗑][⏻]    │  ← cabeçalho (arraste aqui)
+├─────────────────────────────────────────────┤
+│                                             │
+│  Escreva aqui... ou use **markdown**        │
+│                                             │
+│  - Listas                                   │
+│  - **Negrito**, _itálico_                   │
+│                                             │
+└─────────────────────────────────────────────┘
+                                         ↖ arraste os cantos para redimensionar
+```
+
+| Botão | Ação |
 |---|---|
-| `+` | New post-it |
-| `🔔 / 🔕` | Configure alarm |
-| `💾` | Save note |
-| `🗑` | Delete note (asks for confirmation) |
-| `⏻` | Quit application |
+| `+` | Nova nota |
+| `🎨` | Trocar cor (6 opções) |
+| `👁` / `✏` | Alternar edição / preview markdown |
+| `🔔` / `🔕` | Configurar alarme |
+| `💾` | Salvar manualmente |
+| `🗑` | Deletar nota (pede confirmação) |
+| `⏻` | Fechar o aplicativo |
 
-**Drag** the yellow title bar to move the note.  
-**Resize** by dragging from any corner or edge.
+### Markdown suportado
 
-## Data
+```markdown
+# Título
+**negrito** e _itálico_
 
-All data is stored locally:
+- Item de lista
+- Outro item
+
+| Coluna 1 | Coluna 2 |
+|----------|----------|
+| dado     | dado     |
+
+`código inline`
+
+```bloco de código```
+```
+
+### Imagens na nota
+
+- **Arrastar:** arraste um arquivo `.png`, `.jpg`, `.gif`, `.webp` etc. para dentro da nota
+- **Colar:** copie uma imagem de qualquer lugar e use `Ctrl+V` na nota
+
+As imagens aparecem renderizadas no modo preview (`👁`).
+
+### Alarmes
+
+Clique em `🔕` para configurar:
+
+- **Uma vez** → data + hora específicas
+- **Todo dia** → dispara todo dia no horário definido (ex: `14:00`)
+- **Intervalo** → a cada N horas/minutos (ex: a cada `2h 30min`)
+
+Cada alarme pode ter seu próprio som (MP3, WAV ou OGG, máx. 15 MB). Use `▶` para ouvir a prévia antes de salvar.
+
+---
+
+## 📁 Estrutura de dados
 
 ```
-~/.local/share/postix/notes.db   ← SQLite database
+~/.local/share/postix/
+├── notes.db          ← banco SQLite (notas + alarmes)
+└── images/
+    └── {id}/         ← imagens de cada nota
 ```
 
-No cloud, no telemetry, no accounts.
+---
 
-## License
+## 🐛 Problemas conhecidos / FAQ
 
-[MIT](LICENSE) © 2026 Arthur Alves <arthur.4lvevs@gmail.com>
+**O ícone da bandeja não aparece**
+> Instale: `sudo apt install gir1.2-appindicator3-0.1`
+
+**O preview markdown não aparece**
+> Instale: `sudo apt install gir1.2-webkit2-4.1`
+
+**Som do alarme não toca**
+> Instale: `sudo apt install gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly`
+
+**Como faço backup das notas?**
+> Copie `~/.local/share/postix/notes.db`
+
+---
+
+## 🤝 Contribuindo
+
+Pull requests são bem-vindos!
+
+```bash
+git clone https://github.com/arthur-alves/postix.git
+cd postix
+python3 postix/main.py   # testar localmente
+```
+
+---
+
+## 📄 Licença
+
+[MIT](LICENSE) © 2026 Arthur Alves &lt;arthur.4lvevs@gmail.com&gt;
