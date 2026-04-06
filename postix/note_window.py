@@ -44,7 +44,8 @@ MIN_W      = 220
 MIN_H      = 140
 MAX_SIZE   = 1280
 HEADER_H   = 30
-GRIP       = 14
+GRIP       = 18
+RESIZE_BAR = 10   # height of the bottom resize bar
 IMAGES_DIR = Path.home() / ".local" / "share" / "postix" / "images"
 
 # 6 post-it color palettes  (bg, header, border, line)
@@ -92,6 +93,16 @@ _BASE_CSS = (
     "  font-family: 'Ubuntu','DejaVu Sans','Liberation Sans',sans-serif;"
     "  font-size: 13px;"
     "}"
+    ".resize-bar {"
+    "  min-height: 10px;"
+    "  opacity: 0.5;"
+    "}"
+    ".resize-bar:hover { opacity: 1.0; }"
+    ".resize-corner {"
+    "  font-size: 10px;"
+    "  color: rgba(0,0,0,0.4);"
+    "  padding: 0 2px 0 0;"
+    "}"
     ".color-dot {"
     "  border-radius: 50%;"
     "  border: 2px solid rgba(0,0,0,0.25);"
@@ -119,6 +130,7 @@ def _color_css(note_id: int, c: dict) -> bytes:
         f"    transparent, transparent 21px, {c['line']} 21px, {c['line']} 22px);"
         f"}}"
         f"{nid} scrolledwindow {{ background-color: {c['bg']}; }}"
+        f"{nid} .resize-bar {{ background-color: {c['hdr']}; border-top: 1px solid {c['border']}; }}"
     ).encode()
 
 
@@ -269,6 +281,49 @@ class NoteWindow(Gtk.Window):
             root.pack_start(self._preview_stack, True, True, 0)
         else:
             root.pack_start(self._build_editor(), True, True, 0)
+
+        root.pack_start(self._build_resize_bar(), False, False, 0)
+
+    def _build_resize_bar(self) -> Gtk.Widget:
+        """Thin bottom bar with visible SW / S / SE resize handles."""
+        bar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        bar.get_style_context().add_class("resize-bar")
+        bar.set_size_request(-1, RESIZE_BAR)
+
+        def _grip_eb(edge, cursor, expand=False, label=None):
+            eb = Gtk.EventBox()
+            eb.set_hexpand(expand)
+            if not expand:
+                eb.set_size_request(20, RESIZE_BAR)
+            eb.add_events(
+                Gdk.EventMask.BUTTON_PRESS_MASK
+                | Gdk.EventMask.ENTER_NOTIFY_MASK
+                | Gdk.EventMask.LEAVE_NOTIFY_MASK
+            )
+            eb.connect("button-press-event",
+                       lambda w, e, _e=edge: self.begin_resize_drag(
+                           _e, e.button, int(e.x_root), int(e.y_root), e.time))
+            eb.connect("enter-notify-event",
+                       lambda w, e, c=cursor: w.get_window().set_cursor(
+                           Gdk.Cursor.new_from_name(self.get_display(), c))
+                       if w.get_window() else None)
+            eb.connect("leave-notify-event",
+                       lambda w, e: w.get_window().set_cursor(None)
+                       if w.get_window() else None)
+            if label:
+                lbl = Gtk.Label(label=label)
+                lbl.get_style_context().add_class("resize-corner")
+                eb.add(lbl)
+            return eb
+
+        bar.pack_start(_grip_eb(Gdk.WindowEdge.SOUTH_WEST, "sw-resize"),
+                       False, False, 0)
+        bar.pack_start(_grip_eb(Gdk.WindowEdge.SOUTH, "s-resize", expand=True),
+                       True, True, 0)
+        bar.pack_start(_grip_eb(Gdk.WindowEdge.SOUTH_EAST, "se-resize",
+                                label="◢"),
+                       False, False, 0)
+        return bar
 
     def _build_editor(self) -> Gtk.Widget:
         scroll = Gtk.ScrolledWindow()
@@ -544,12 +599,13 @@ class NoteWindow(Gtk.Window):
             return True
         return False
 
-    def _on_tv_motion(self, _w, event):
+    def _on_tv_motion(self, widget, event):
         wx, wy = self.get_position()
         edge = self._detect_edge(event.x_root - wx, event.y_root - wy)
-        win  = self.get_window()
-        if win:
-            win.set_cursor(Gdk.Cursor.new_from_name(
+        # Must set on the TextView's text GdkWindow — it overrides the parent cursor
+        tv_win = widget.get_window(Gtk.TextWindowType.TEXT)
+        if tv_win:
+            tv_win.set_cursor(Gdk.Cursor.new_from_name(
                 self.get_display(), _EDGE_CURSORS.get(edge, "text")))
 
     # ── save / load ───────────────────────────────────────────────────────────
