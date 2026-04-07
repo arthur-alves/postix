@@ -7,8 +7,23 @@ DB_PATH = Path.home() / ".local" / "share" / "postix" / "notes.db"
 
 
 def get_connection():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH))
+    try:
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        import sys
+        sys.exit(
+            f"Postix: permission denied creating data directory: {DB_PATH.parent}\n"
+            f"Fix with: chmod 755 {DB_PATH.parent}"
+        )
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+    except sqlite3.OperationalError as e:
+        import sys
+        sys.exit(
+            f"Postix: unable to open database at {DB_PATH}\n"
+            f"Reason: {e}\n"
+            f"Fix with: chmod 755 {DB_PATH.parent}"
+        )
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn

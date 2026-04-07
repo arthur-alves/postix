@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "1.0.6"
+VERSION = "1.0.7"
 PACKAGE = f"postix_{VERSION}_all"
 
 ROOT = Path(__file__).parent
