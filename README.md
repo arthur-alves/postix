@@ -2,9 +2,12 @@
 
 # 📝 Postix
 
-**Floating sticky notes for the Linux desktop**
+**Your thoughts, always in sight. Your focus, always on track.**
 
-Simple, lightweight, always on top — with alarms, colors, markdown and image support.
+Postix puts sticky notes right on your desktop — floating, always visible, always on top.
+Write it down, set an alarm, and let Postix drag you back when it matters most.
+
+*Because the best reminder is the one you can't ignore.*
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-blue.svg)](https://github.com/arthur-alves/postix/releases)
